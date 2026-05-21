@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pipe RM Calculator</title>
+  <meta name="description" content="Pipe Raw Material Calculator – calculate raw pipe dimensions and weight for ordering." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --surface3: #30363d;
+      --border: #30363d;
+      --border-light: #444c56;
+      --accent: #58a6ff;
+      --accent2: #1f6feb;
+      --accent-glow: rgba(88,166,255,0.15);
+      --green: #3fb950;
+      --green-dim: rgba(63,185,80,0.15);
+      --orange: #d29922;
+      --orange-dim: rgba(210,153,34,0.15);
+      --red: #f85149;
+      --red-dim: rgba(248,81,73,0.15);
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --text-dim: #6e7681;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --transition: 0.2s ease;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Layout ── */
+    .app-shell {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .header-title { font-size: 16px; font-weight: 600; color: var(--text); }
+    .header-subtitle { font-size: 11px; color: var(--text-muted); }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .tab-btn {
+      padding: 12px 18px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color var(--transition), border-color var(--transition);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── Main content ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+    /* ── Section ── */
+    .section { margin-bottom: 24px; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 15px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .card-compact { padding: 14px 16px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent2);
+      border-color: var(--accent2);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #388bfd; border-color: #388bfd; }
+    .btn-secondary {
+      background: var(--surface2);
+      border-color: var(--border-light);
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: var(--surface3); border-color: #6e7681; }
+    .btn-danger {
+      background: transparent;
+      border-color: var(--red);
+      color: var(--red);
+    }
+    .btn-danger:hover { background: var(--red-dim); }
+    .btn-green {
+      background: #238636;
+      border-color: #238636;
+      color: #fff;
+    }
+    .btn-green:hover { background: #2ea043; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-icon { padding: 6px 8px; }
+
+    /* ── Form elements ── */
+    .form-group { margin-bottom: 14px; }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      letter-spacing: 0.3px;
+    }
+    input, select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 8px 10px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    input::placeholder { color: var(--text-dim); }
+    select option { background: var(--surface2); }
+
+    /* ── Add item row ── */
+    .add-item-bar {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: end;
+    }
+    @media (max-width: 700px) {
+      .add-item-bar { grid-template-columns: 1fr 1fr; }
+      .add-item-bar .btn { grid-column: span 2; }
+    }
+
+    /* ── Search dropdown ── */
+    .autocomplete-wrap { position: relative; }
+    .autocomplete-list {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 200;
+      box-shadow: var(--shadow);
+      display: none;
+    }
+    .autocomplete-list.open { display: block; }
+    .autocomplete-item {
+      padding: 9px 12px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: background var(--transition);
+      font-size: 13px;
+    }
+    .autocomplete-item:hover, .autocomplete-item.selected {
+      background: var(--surface3);
+    }
+    .autocomplete-item .item-name { font-weight: 500; }
+    .autocomplete-item .item-dims {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── Order table ── */
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead tr {
+      background: var(--surface2);
+    }
+    thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+    }
+    thead th.center { text-align: center; }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+    }
+    tbody tr:hover { background: var(--surface2); }
+    tbody tr:last-child { border-bottom: none; }
+    td {
+      padding: 10px 12px;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    td.center { text-align: center; }
+    td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+    .td-name { font-weight: 600; color: var(--text); }
+    .td-raw { color: var(--accent); font-family: 'Courier New', monospace; font-size: 12px; }
+    .td-finish { color: var(--text-muted); font-family: 'Courier New', monospace; font-size: 12px; }
+    .weight-badge {
+      background: var(--green-dim);
+      color: var(--green);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .no-items {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+    }
+    .no-items-icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* ── Summary bar ── */
+    .summary-bar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .summary-card {
+      flex: 1;
+      min-width: 140px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+    }
+    .summary-label { font-size: 11px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+    .summary-value { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 4px; }
+    .summary-value.accent { color: var(--accent); }
+    .summary-value.green { color: var(--green); }
+
+    /* ── Stock Settings ── */
+    .stock-rules { display: flex; flex-direction: column; gap: 12px; }
+    .stock-rule {
+      display: grid;
+      grid-template-columns: 120px 120px 80px 80px 80px 80px auto;
+      gap: 10px;
+      align-items: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+    @media (max-width: 900px) {
+      .stock-rule {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+    }
+    .stock-rule label { margin: 0; font-size: 11px; color: var(--text-muted); }
+    .rule-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+    }
+    .allowance-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .allowance-badge.plus { background: var(--green-dim); color: var(--green); }
+    .allowance-badge.minus { background: var(--red-dim); color: var(--red); }
+
+    /* ── DB Browser ── */
+    .db-search-bar {
+      display: flex; gap: 10px; margin-bottom: 16px;
+      align-items: center; flex-wrap: wrap;
+    }
+    .db-search-bar input { max-width: 320px; }
+    .db-count { font-size: 12px; color: var(--text-muted); }
+    .db-table thead th { position: sticky; top: 0; background: var(--surface2); z-index: 10; }
+    .db-wrap { max-height: 500px; overflow-y: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+
+    /* ── Qty input ── */
+    .qty-input {
+      width: 80px;
+      text-align: center;
+    }
+
+    /* ── Toast ── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 9999;
+    }
+    .toast {
+      background: var(--surface2);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      color: var(--text);
+      font-size: 13px;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.25s ease;
+      max-width: 340px;
+    }
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.error { border-left: 3px solid var(--red); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
+    /* ── Spinner overlay ── */
+    .spinner-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(13,17,23,0.7);
+      z-index: 9000;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .spinner-overlay.active { display: flex; }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6e7681; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      header { padding: 0 14px; }
+      main { padding: 14px; }
+      .tabs { padding: 0 14px; }
+      .tab-btn { padding: 10px 12px; font-size: 12px; }
+    }
+
+    /* ── Delete row button ── */
+    .del-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-dim);
+      font-size: 16px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: color var(--transition), background var(--transition);
+      line-height: 1;
+    }
+    .del-btn:hover { color: var(--red); background: var(--red-dim); }
+
+    /* Drag handle */
+    .drag-handle {
+      color: var(--text-dim);
+      cursor: grab;
+      padding: 4px 6px;
+      font-size: 14px;
+      user-select: none;
+    }
+    .drag-handle:active { cursor: grabbing; }
+
+    tr.drag-over { background: var(--accent-glow) !important; }
+
+    /* ── Info chips ── */
+    .chip {
+      display: inline-flex; align-items: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      gap: 4px;
+    }
+    .chip.active-rule {
+      background: var(--orange-dim);
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <!-- Header -->
+  <header>
+    <div class="header-brand">
+      <div class="header-icon">🔩</div>
+      <div>
+        <div class="header-title">Pipe RM Calculator</div>
+        <div class="header-subtitle">Raw Material Order Planner</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-sm" id="btn-clear-all" title="Clear all items">🗑 Clear All</button>
+      <button class="btn btn-green" id="btn-export">⬇ Export Excel</button>
+      <button class="btn btn-primary" id="btn-import-trigger">⬆ Import Excel</button>
+      <input type="file" id="input-import-excel" accept=".xlsx, .xls" style="display:none" />
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="calculator">📋 Calculator</button>
+    <button class="tab-btn" data-tab="settings">⚙️ Stock Settings</button>
+    <button class="tab-btn" data-tab="database">📦 Pipe Database</button>
+  </div>
+
+  <!-- Main -->
+  <main>
+    <!-- ═══════════════════════════════════════ CALCULATOR ═══════════════════════════════════════ -->
+    <div class="tab-panel active" id="tab-calculator">
+
+      <!-- Add item -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title"><span class="dot"></span>Add Item to Order</div>
+        </div>
+        <div class="card">
+          <div class="add-item-bar">
+            <div class="form-group" style="margin:0">
+              <label>Product Name</label>
+              <div class="autocomplete-wrap">
+                <input type="text" id="input-product" placeholder="Type to search e.g. H 204…" autocomplete="off" />
+                <div class="autocomplete-list" id="autocomplete-list"></div>
+              </div>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>Quantity (pcs)</label>
+              <input type="number" id="input-qty" class="qty-input" placeholder="1" min="1" step="1" style="width:100px" />
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>Length (mm)</label>
+              <input type="number" id="input-length" placeholder="Auto (=THK)" min="1" style="width:120px" title="Leave blank to use Raw THK as length" />
+            </div>
+            <button class="btn btn-primary" id="btn-add-item">+ Add</button>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;" id="selected-pipe-info"></div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="summary-bar" id="summary-bar" style="display:none">
+        <div class="summary-card">
+          <div class="summary-label">Total Items</div>
+          <div class="summary-value accent" id="sum-items">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Pieces</div>
+          <div class="summary-value" id="sum-qty">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Length (m)</div>
+          <div class="summary-value" id="sum-mtr">0.00</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Weight (kg)</div>
+          <div class="summary-value green" id="sum-weight">0.00</div>
+        </div>
+      </div>
+
+      <!-- Order table -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title"><span class="dot"></span>Order List</div>
+          <div style="display:flex;gap:8px">
+            <span id="active-rule-chip" style="display:none" class="chip active-rule"></span>
+          </div>
+        </div>
+        <div class="card" style="padding:0; overflow:hidden;">
+          <div class="table-wrap">
+            <table id="order-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Material</th>
+                  <th class="center">Qty</th>
+                  <th colspan="3" class="center">Finish Size (mm)</th>
+                  <th colspan="3" class="center">Raw Size (mm)</th>
+                  <th class="center">Length (mm)</th>
+                  <th class="center">Qty (m)</th>
+                  <th class="center">Weight (kg)</th>
+                  <th></th>
+                </tr>
+                <tr style="background:var(--bg)">
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                  <th class="center" style="font-size:10px;color:var(--text-dim)">ID</th>
+                  <th class="center" style="font-size:10px;color:var(--text-dim)">OD</th>
+                  <th class="center" style="font-size:10px;color:var(--text-dim)">THK</th>
+                  <th class="center" style="font-size:10px;color:var(--accent)">ID</th>
+                  <th class="center" style="font-size:10px;color:var(--accent)">OD</th>
+                  <th class="center" style="font-size:10px;color:var(--accent)">THK</th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="order-tbody">
+                <tr id="no-items-row">
+                  <td colspan="13" class="no-items">
+                    <div class="no-items-icon">📭</div>
+                    <div>No items yet. Search and add a product above.</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ SETTINGS ═══════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-settings">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title"><span class="dot"></span>Stock Allowance Rules</div>
+          <button class="btn btn-primary btn-sm" id="btn-add-rule">+ Add Rule</button>
+        </div>
+        <div class="card" style="margin-bottom:16px;">
+          <p style="color:var(--text-muted); font-size:13px; line-height:1.7;">
+            Define allowance rules based on <strong style="color:var(--text)">Finish OD range</strong>.<br />
+            The matching rule adjusts Raw ID/OD/THK from Finish values. Rules are checked top-to-bottom; the first match wins.<br />
+            Default (if no rule matches): <strong style="color:var(--accent)">Raw ID = Finish ID − 5 &nbsp;|&nbsp; Raw OD = Finish OD + 5 &nbsp;|&nbsp; Raw THK = Finish THK + 7</strong>
+          </p>
+        </div>
+        <div class="stock-rules" id="rules-container"></div>
+
+        <div style="margin-top:20px;" class="card">
+          <div class="section-title" style="margin-bottom:12px;"><span class="dot"></span>Default Allowances (when no rule matches)</div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:420px;">
+            <div class="form-group" style="margin:0">
+              <label>ID Allowance</label>
+              <input type="number" id="default-id-allow" value="-5" step="1" />
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>OD Allowance</label>
+              <input type="number" id="default-od-allow" value="5" step="1" />
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>THK Allowance</label>
+              <input type="number" id="default-thk-allow" value="7" step="1" />
+            </div>
+          </div>
+          <div style="margin-top:14px;">
+            <button class="btn btn-primary btn-sm" id="btn-save-defaults">Save Defaults</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ DATABASE ═══════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-database">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title"><span class="dot"></span>Pipe Database</div>
+          <span class="db-count" id="db-count"></span>
+        </div>
+        <div class="db-search-bar">
+          <input type="text" id="db-search" placeholder="Filter by name or dimensions…" style="max-width:320px" />
+          <select id="db-filter-series" style="width:180px">
+            <option value="">All Series</option>
+          </select>
+        </div>
+        <div class="db-wrap">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th class="center">Finish ID (mm)</th>
+                <th class="center">Finish OD (mm)</th>
+                <th class="center">Finish THK (mm)</th>
+                <th class="center">Raw ID</th>
+                <th class="center">Raw OD</th>
+                <th class="center">Raw THK</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="db-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Spinner -->
+<div class="spinner-overlay" id="spinner">
+  <div class="spinner"></div>
+  <span style="color:var(--text-muted);font-size:13px">Generating Excel…</span>
+</div>
+
+<script>
+const PIPE_DATABASE = [{"name":"H 204","id":17.0,"od":21.42,"thk":24.0},{"name":"H 205","id":20.0,"od":26.5,"thk":26.0},{"name":"H 206","id":25.0,"od":31.5833333333333,"thk":27.0},{"name":"H 207","id":30.0,"od":36.6666666666667,"thk":29.0},{"name":"H 208","id":35.0,"od":41.75,"thk":31.0},{"name":"H 209","id":40.0,"od":46.8333333333333,"thk":33.0},{"name":"H 210","id":45.0,"od":51.9166666666667,"thk":35.0},{"name":"H 211","id":50.0,"od":57.0416666666667,"thk":37.0},{"name":"H 212","id":55.0,"od":62.0833333333333,"thk":38.0},{"name":"H 213","id":60.0,"od":67.1666666666667,"thk":40.0},{"name":"H 215","id":65.0,"od":77.3333333333333,"thk":43.0},{"name":"H 216","id":70.0,"od":82.4166666666667,"thk":46.0},{"name":"H 217","id":75.0,"od":87.6666666666667,"thk":50.0},{"name":"H 218","id":80.0,"od":92.8333333333333,"thk":52.0},{"name":"H 219","id":85.0,"od":98.0,"thk":55.0},{"name":"H 220","id":90.0,"od":103.166666666667,"thk":58.0},{"name":"H 221","id":95.0,"od":108.333333333333,"thk":60.0},{"name":"H 222","id":100.0,"od":113.5,"thk":63.0},{"name":"H 2305","id":20.0,"od":27.25,"thk":35.0},{"name":"H 2306","id":25.0,"od":32.5,"thk":38.0},{"name":"H 2307","id":30.0,"od":37.8333333333333,"thk":43.0},{"name":"H 2308","id":35.0,"od":43.0,"thk":46.0},{"name":"H 2309","id":40.0,"od":48.25,"thk":50.0},{"name":"H 2310","id":45.0,"od":53.5833333333333,"thk":55.0},{"name":"H 2311","id":50.0,"od":58.875,"thk":59.0},{"name":"H 2312","id":55.0,"od":64.0833333333333,"thk":62.0},{"name":"H 2313","id":60.0,"od":69.25,"thk":65.0},{"name":"H 2314","id":60.0,"od":74.5,"thk":68.0},{"name":"H 2315","id":65.0,"od":79.8333333333333,"thk":73.0},{"name":"H 2316","id":70.0,"od":85.0833333333333,"thk":78.0},{"name":"H 2317","id":75.0,"od":90.3333333333333,"thk":82.0},{"name":"H 2318","id":80.0,"od":95.6666666666667,"thk":86.0},{"name":"H 2319","id":85.0,"od":100.916666666667,"thk":90.0},{"name":"H 2320","id":90.0,"od":106.416666666667,"thk":97.0},{"name":"H 2322","id":100.0,"od":117.0,"thk":105.0},{"name":"H 2324","id":110.0,"od":127.5,"thk":112.0},{"name":"HE 2324","id":107.95,"od":127.5,"thk":112.0},{"name":"H 2326","id":115.0,"od":138.166666666667,"thk":121.0},{"name":"H 2328","id":125.0,"od":148.916666666667,"thk":131.0},{"name":"H 2330","id":135.0,"od":159.416666666667,"thk":139.0},{"name":"H 2332","id":140.0,"od":169.916666666667,"thk":147.0},{"name":"H 2334","id":150.0,"od":180.416666666667,"thk":154.0},{"name":"H 2336","id":160.0,"od":190.916666666667,"thk":161.0},{"name":"H 2338","id":170.0,"od":201.5,"thk":169.0},{"name":"H 2340","id":180.0,"od":212.0,"thk":176.0},{"name":"H 2344","id":200.0,"od":232.6,"thk":186.0},{"name":"H 2348","id":220.0,"od":253.5,"thk":199.0},{"name":"H 2352","id":240.0,"od":274.33,"thk":211.0},{"name":"H 2356","id":260.0,"od":295.25,"thk":224.0},{"name":"H 304","id":17.0,"od":21.75,"thk":28.0},{"name":"H 305","id":20.0,"od":26.75,"thk":29.0},{"name":"H 306","id":25.0,"od":31.9166666666667,"thk":31.0},{"name":"H 307","id":30.0,"od":37.1666666666667,"thk":35.0},{"name":"H 308","id":35.0,"od":42.3333333333333,"thk":38.0},{"name":"H 309","id":40.0,"od":47.3333333333333,"thk":39.0},{"name":"H 310","id":45.0,"od":52.5,"thk":42.0},{"name":"H 311","id":50.0,"od":57.7083333333333,"thk":45.0},{"name":"H 312","id":55.0,"od":62.8333333333333,"thk":47.0},{"name":"H 313","id":60.0,"od":68.0,"thk":50.0},{"name":"H 314","id":60.0,"od":73.1666666666667,"thk":52.0},{"name":"H 315","id":65.0,"od":78.3333333333333,"thk":55.0},{"name":"H 316","id":70.0,"od":83.5,"thk":59.0},{"name":"H 317","id":75.0,"od":88.75,"thk":63.0},{"name":"H 318","id":80.0,"od":93.9166666666667,"thk":65.0},{"name":"H 319","id":85.0,"od":99.0833333333333,"thk":68.0},{"name":"H 320","id":90.0,"od":104.25,"thk":71.0},{"name":"H 321","id":95.0,"od":109.5,"thk":74.0},{"name":"H 322","id":100.0,"od":114.666666666667,"thk":77.0},{"name":"H 3122","id":100.0,"od":115.0,"thk":81.0},{"name":"H 3124","id":110.0,"od":125.5,"thk":88.0},{"name":"H 3126","id":115.0,"od":135.75,"thk":92.0},{"name":"H 3128","id":125.0,"od":146.083333333333,"thk":97.0},{"name":"H 3130","id":135.0,"od":157.083333333333,"thk":111.0},{"name":"H 3132","id":140.0,"od":167.583333333333,"thk":119.0},{"name":"H 3134","id":150.0,"od":177.75,"thk":122.0},{"name":"H 3136","id":160.0,"od":188.416666666667,"thk":131.0},{"name":"H 3138","id":170.0,"od":199.166666666667,"thk":141.0},{"name":"H 3140","id":180.0,"od":209.8,"thk":150.0},{"name":"H 3144","id":200.0,"od":230.5,"thk":161.0},{"name":"H 3148","id":220.0,"od":251.25,"thk":172.0},{"name":"H 3152","id":240.0,"od":272.6,"thk":190.0},{"name":"H 3156","id":260.0,"od":292.83,"thk":195.0},{"name":"H 3160","id":280.0,"od":314.0,"thk":208.0},{"name":"H 3164","id":300.0,"od":335.33,"thk":226.0},{"name":"H 3168","id":320.0,"od":356.6,"thk":254.0},{"name":"H 3172","id":340.0,"od":376.75,"thk":259.0},{"name":"H 3176","id":360.0,"od":397.0,"thk":264.0},{"name":"H 3180","id":380.0,"od":417.5,"thk":272.0},{"name":"H 3184","id":400.0,"od":439.5,"thk":304.0},{"name":"H 3188","id":410.0,"od":459.75,"thk":307.0},{"name":"H 3192","id":430.0,"od":480.9,"thk":326.0},{"name":"H 3196","id":450.0,"od":501.6,"thk":335.0},{"name":"H 31/500","id":470.0,"od":523.0,"thk":356.0},{"name":"H 30 / 530","id":500.0,"od":546.41,"thk":265.0},{"name":"H 3024","id":110.0,"od":124.166666666667,"thk":72.0},{"name":"H 3026","id":115.0,"od":134.75,"thk":80.0},{"name":"H 3028","id":125.0,"od":144.833333333333,"thk":82.0},{"name":"H 3030","id":135.0,"od":155.083333333333,"thk":87.0},{"name":"H 3032","id":140.0,"od":165.458333333333,"thk":93.0},{"name":"H 3034","id":150.0,"od":176.041666666667,"thk":101.0},{"name":"H 3036","id":160.0,"od":186.625,"thk":109.0},{"name":"H 3038","id":170.0,"od":196.791666666667,"thk":112.0},{"name":"H 3040","id":180.0,"od":207.4,"thk":120.0},{"name":"H 3044","id":200.0,"od":228.0,"thk":126.0},{"name":"H 3048","id":220.0,"od":248.25,"thk":133.0},{"name":"H 3052","id":240.0,"od":269.25,"thk":145.0},{"name":"H 3056","id":260.0,"od":289.5,"thk":152.0},{"name":"H 3060","id":280.0,"od":310.5,"thk":168.0},{"name":"H 3064","id":300.0,"od":330.75,"thk":171.0},{"name":"H 3068","id":320.0,"od":351.8,"thk":187.0},{"name":"H 3072","id":340.0,"od":371.9,"thk":188.0},{"name":"H 3076","id":360.0,"od":392.08,"thk":193.0},{"name":"H 3080","id":380.0,"od":413.16,"thk":210.0},{"name":"H 3084","id":400.0,"od":433.33,"thk":212.0},{"name":"H 3088","id":410.0,"od":454.0,"thk":228.0},{"name":"H 3092","id":430.0,"od":474.5,"thk":234.0},{"name":"H 3096","id":450.0,"od":494.75,"thk":237.0},{"name":"H 30/500","id":470.0,"od":514.9,"thk":247.0},{"name":"KM 0","id":10.0,"od":18.0,"thk":4.0},{"name":"KM 1","id":12.0,"od":22.0,"thk":4.0},{"name":"KM 2","id":15.0,"od":25.0,"thk":5.0},{"name":"KM 3","id":17.0,"od":28.0,"thk":5.0},{"name":"KM 4","id":20.0,"od":32.0,"thk":6.0},{"name":"KM 5","id":25.0,"od":38.0,"thk":7.0},{"name":"KM 6","id":30.0,"od":45.0,"thk":7.0},{"name":"KM 7","id":35.0,"od":52.0,"thk":8.0},{"name":"KM 8","id":40.0,"od":58.0,"thk":9.0},{"name":"KM 9","id":45.0,"od":65.0,"thk":10.0},{"name":"KM 10","id":50.0,"od":70.0,"thk":11.0},{"name":"KM 11","id":55.0,"od":75.0,"thk":11.0},{"name":"HM 11","id":55.0,"od":75.0,"thk":11.0},{"name":"KM 12","id":60.0,"od":80.0,"thk":11.0},{"name":"KM 13","id":65.0,"od":85.0,"thk":12.0},{"name":"KM 14","id":70.0,"od":92.0,"thk":12.0},{"name":"KM 15","id":75.0,"od":98.0,"thk":13.0},{"name":"KM 16","id":80.0,"od":105.0,"thk":15.0},{"name":"KM 17","id":85.0,"od":110.0,"thk":16.0},{"name":"KM 18","id":90.0,"od":120.0,"thk":16.0},{"name":"KM 19","id":95.0,"od":125.0,"thk":17.0},{"name":"KM 20","id":100.0,"od":130.0,"thk":18.0},{"name":"KM 21","id":105.0,"od":140.0,"thk":18.0},{"name":"KM 22","id":110.0,"od":145.0,"thk":19.0},{"name":"KM 23","id":115.0,"od":150.0,"thk":19.0},{"name":"KML 24","id":120.0,"od":145.0,"thk":20.0},{"name":"KM 24","id":120.0,"od":155.0,"thk":20.0},{"name":"KM 25","id":125.0,"od":160.0,"thk":21.0},{"name":"KML 26","id":130.0,"od":155.0,"thk":21.0},{"name":"KM 26","id":130.0,"od":165.0,"thk":21.0},{"name":"KM 27","id":135.0,"od":175.0,"thk":22.0},{"name":"KML 28","id":140.0,"od":165.0,"thk":22.0},{"name":"KM 28","id":140.0,"od":180.0,"thk":22.0},{"name":"KM 29","id":145.0,"od":190.0,"thk":24.0},{"name":"KML 30","id":150.0,"od":180.0,"thk":24.0},{"name":"KM 30","id":150.0,"od":195.0,"thk":24.0},{"name":"KM 31","id":155.0,"od":200.0,"thk":25.0},{"name":"KML 32","id":160.0,"od":190.0,"thk":25.0},{"name":"KM 32","id":160.0,"od":210.0,"thk":25.0},{"name":"KM 33","id":165.0,"od":210.0,"thk":26.0},{"name":"KML 34","id":170.0,"od":200.0,"thk":26.0},{"name":"KM 34","id":170.0,"od":220.0,"thk":26.0},{"name":"KML 36","id":180.0,"od":210.0,"thk":27.0},{"name":"KM 36","id":180.0,"od":230.0,"thk":27.0},{"name":"KML 38","id":190.0,"od":220.0,"thk":28.0},{"name":"KM 38","id":190.0,"od":240.0,"thk":28.0},{"name":"KML 40","id":200.0,"od":240.0,"thk":29.0},{"name":"KM 40","id":200.0,"od":250.0,"thk":29.0},{"name":"HML 41","id":205.0,"od":250.0,"thk":30.0},{"name":"HM 42","id":210.0,"od":270.0,"thk":30.0},{"name":"HML 43","id":215.0,"od":260.0,"thk":30.0},{"name":"HM 44","id":220.0,"od":280.0,"thk":32.0},{"name":"HM 46","id":230.0,"od":290.0,"thk":34.0},{"name":"HML 47","id":235.0,"od":280.0,"thk":34.0},{"name":"HM 48","id":240.0,"od":300.0,"thk":34.0},{"name":"HM 50","id":250.0,"od":320.0,"thk":36.0},{"name":"HML 52","id":260.0,"od":310.0,"thk":34.0},{"name":"HM 52","id":260.0,"od":330.0,"thk":36.0},{"name":"HM 54","id":270.0,"od":340.0,"thk":38.0},{"name":"HM 56","id":280.0,"od":350.0,"thk":38.0},{"name":"HM 58","id":290.0,"od":370.0,"thk":40.0},{"name":"HM 60","id":300.0,"od":380.0,"thk":40.0},{"name":"HM 62","id":310.0,"od":390.0,"thk":42.0},{"name":"HM 3044","id":220.0,"od":260.0,"thk":30.0},{"name":"HM 3048","id":240.0,"od":290.0,"thk":34.0},{"name":"HM 3052","id":260.0,"od":310.0,"thk":34.0},{"name":"HM 3056","id":280.0,"od":330.0,"thk":38.0},{"name":"HM 3060","id":300.0,"od":360.0,"thk":42.0},{"name":"HM 3160","id":300.0,"od":380.0,"thk":40.0},{"name":"HM 3064","id":320.0,"od":380.0,"thk":42.0},{"name":"HM 3164","id":320.0,"od":400.0,"thk":42.0},{"name":"HM 3068","id":340.0,"od":400.0,"thk":45.0},{"name":"HM 3168","id":340.0,"od":440.0,"thk":55.0},{"name":"HM 3072","id":360.0,"od":420.0,"thk":45.0},{"name":"HM 3172","id":360.0,"od":460.0,"thk":58.0},{"name":"HM 3076","id":380.0,"od":450.0,"thk":48.0},{"name":"HM 3176","id":380.0,"od":490.0,"thk":60.0},{"name":"HM 3080","id":400.0,"od":470.0,"thk":52.0},{"name":"HM 3180","id":400.0,"od":520.0,"thk":62.0},{"name":"HM 3084","id":420.0,"od":490.0,"thk":52.0},{"name":"HM 3184","id":420.0,"od":540.0,"thk":70.0},{"name":"HM 3088","id":440.0,"od":520.0,"thk":60.0},{"name":"HM 3188","id":440.0,"od":560.0,"thk":70.0},{"name":"HM 3092","id":460.0,"od":540.0,"thk":60.0},{"name":"HM 3192","id":460.0,"od":580.0,"thk":75.0},{"name":"HM 3096","id":480.0,"od":560.0,"thk":60.0},{"name":"HM 3196","id":480.0,"od":620.0,"thk":75.0},{"name":"HM 30/500","id":500.0,"od":580.0,"thk":68.0},{"name":"HM 31/500","id":500.0,"od":630.0,"thk":80.0},{"name":"HM 30/530","id":530.0,"od":630.0,"thk":68.0},{"name":"HM 31/530","id":530.0,"od":670.0,"thk":80.0},{"name":"HM 30/560","id":560.0,"od":650.0,"thk":75.0},{"name":"HM 31/560","id":560.0,"od":710.0,"thk":85.0},{"name":"HM 30/600","id":600.0,"od":700.0,"thk":75.0},{"name":"HM 31/600","id":600.0,"od":750.0,"thk":85.0},{"name":"HM 30/630","id":630.0,"od":730.0,"thk":75.0},{"name":"HM 31/630","id":630.0,"od":800.0,"thk":95.0},{"name":"HM 30/670","id":670.0,"od":780.0,"thk":80.0},{"name":"HM 31/670","id":670.0,"od":850.0,"thk":106.0},{"name":"HM 30/710","id":710.0,"od":830.0,"thk":90.0},{"name":"HM 30/750","id":750.0,"od":870.0,"thk":90.0},{"name":"HM 30/800","id":750.0,"od":920.0,"thk":90.0},{"name":"HM 30/850","id":850.0,"od":980.0,"thk":90.0},{"name":"AH 308","id":35.0,"od":45.0,"thk":29.0},{"name":"AH 2308","id":35.0,"od":45.0,"thk":40.0},{"name":"AH 309","id":40.0,"od":50.0,"thk":31.0},{"name":"AH 2309","id":40.0,"od":50.0,"thk":44.0},{"name":"AH 310","id":45.0,"od":55.0,"thk":35.0},{"name":"AH 2310","id":45.0,"od":55.0,"thk":50.0},{"name":"AH 311","id":50.0,"od":60.0,"thk":37.0},{"name":"AH 2311","id":50.0,"od":60.0,"thk":54.0},{"name":"AH 312","id":55.0,"od":65.0,"thk":40.0},{"name":"AH 2312","id":55.0,"od":65.0,"thk":58.0},{"name":"AH 313","id":60.0,"od":70.0,"thk":42.0},{"name":"AH 2313","id":60.0,"od":75.0,"thk":61.0},{"name":"AH 314","id":65.0,"od":75.0,"thk":43.0},{"name":"AH 2314","id":65.0,"od":80.0,"thk":64.0},{"name":"AH 315","id":70.0,"od":80.0,"thk":45.0},{"name":"AH 2315","id":70.0,"od":85.0,"thk":68.0},{"name":"AH 316","id":75.0,"od":90.0,"thk":48.0},{"name":"AHX 2316","id":75.0,"od":90.0,"thk":71.0},{"name":"AHX 317","id":80.0,"od":95.0,"thk":52.0},{"name":"AHX 2317","id":80.0,"od":95.0,"thk":74.0},{"name":"AHX 318","id":85.0,"od":100.0,"thk":53.0},{"name":"AHX 3218","id":85.0,"od":100.0,"thk":63.0},{"name":"AHX 2318","id":85.0,"od":100.0,"thk":79.0},{"name":"AHX 319","id":90.0,"od":105.0,"thk":57.0},{"name":"AHX 2319","id":90.0,"od":105.0,"thk":85.0},{"name":"AHX 320","id":95.0,"od":110.0,"thk":59.0},{"name":"AHX 3120","id":95.0,"od":110.0,"thk":64.0},{"name":"AHX 3220","id":95.0,"od":110.0,"thk":73.0},{"name":"AHX 2320","id":95.0,"od":110.0,"thk":90.0},{"name":"AHX 3122","id":105.0,"od":120.0,"thk":68.0},{"name":"AHX 3222","id":105.0,"od":125.0,"thk":82.0},{"name":"AHX 2322","id":105.0,"od":125.0,"thk":98.0},{"name":"AH 24122","id":105.0,"od":115.0,"thk":82.0},{"name":"AHX 3024","id":115.0,"od":130.0,"thk":60.0},{"name":"AHX 3124","id":115.0,"od":130.0,"thk":75.0},{"name":"AHX 3224","id":115.0,"od":135.0,"thk":90.0},{"name":"AHX 2324","id":115.0,"od":135.0,"thk":105.0},{"name":"AH 24024","id":115.0,"od":125.0,"thk":73.0},{"name":"AH 24124","id":115.0,"od":130.0,"thk":93.0},{"name":"AHX 3026","id":125.0,"od":140.0,"thk":67.0},{"name":"AHX 3126","id":125.0,"od":140.0,"thk":78.0},{"name":"AHX 3226","id":125.0,"od":145.0,"thk":98.0},{"name":"AHX 2326","id":125.0,"od":145.0,"thk":115.0},{"name":"AH 24026","id":125.0,"od":135.0,"thk":83.0},{"name":"AH 24126","id":125.0,"od":140.0,"thk":94.0},{"name":"AHX 3028","id":135.0,"od":150.0,"thk":68.0},{"name":"AHX 3128","id":135.0,"od":150.0,"thk":83.0},{"name":"AHX 3228","id":135.0,"od":155.0,"thk":104.0},{"name":"AHX 2328","id":135.0,"od":155.0,"thk":125.0},{"name":"AH 24028","id":135.0,"od":145.0,"thk":83.0},{"name":"AH 24128","id":135.0,"od":150.0,"thk":109.0},{"name":"AHX 3030","id":145.0,"od":160.0,"thk":72.0},{"name":"AHX 3130","id":145.0,"od":165.0,"thk":96.0},{"name":"AHX 3230","id":145.0,"od":165.0,"thk":114.0},{"name":"AHX 2330","id":145.0,"od":165.0,"thk":135.0},{"name":"AH 24030","id":145.0,"od":155.0,"thk":90.0},{"name":"AH 24130","id":145.0,"od":160.0,"thk":115.0},{"name":"AH 3032","id":150.0,"od":170.0,"thk":77.0},{"name":"AH 3132","id":150.0,"od":180.0,"thk":103.0},{"name":"AH 3232","id":150.0,"od":180.0,"thk":124.0},{"name":"AH 2332","id":150.0,"od":180.0,"thk":140.0},{"name":"AH 24032","id":150.0,"od":170.0,"thk":95.0},{"name":"AH 24132","id":150.0,"od":170.0,"thk":124.0},{"name":"AH 3034","id":160.0,"od":180.0,"thk":85.0},{"name":"AH 3134","id":160.0,"od":190.0,"thk":104.0},{"name":"AH 3234","id":160.0,"od":190.0,"thk":134.0},{"name":"AH 2334","id":160.0,"od":190.0,"thk":146.0},{"name":"AH 24034","id":160.0,"od":180.0,"thk":106.0},{"name":"AH 24134","id":160.0,"od":180.0,"thk":125.0},{"name":"AH 3036","id":170.0,"od":190.0,"thk":92.0},{"name":"AH 2236","id":170.0,"od":200.0,"thk":105.0},{"name":"AH 3136","id":170.0,"od":200.0,"thk":116.0},{"name":"AH 3236","id":170.0,"od":200.0,"thk":140.0},{"name":"AH 2336","id":170.0,"od":200.0,"thk":154.0},{"name":"AH 24036","id":170.0,"od":190.0,"thk":116.0},{"name":"AH 24136","id":170.0,"od":190.0,"thk":134.0},{"name":"AH 3038","id":180.0,"od":205.0,"thk":96.0},{"name":"AH 2238","id":180.0,"od":210.0,"thk":112.0},{"name":"AH 3138","id":180.0,"od":210.0,"thk":125.0},{"name":"AH 3238","id":180.0,"od":210.0,"thk":145.0},{"name":"AH 2338","id":180.0,"od":210.0,"thk":160.0},{"name":"AH 24038","id":180.0,"od":200.0,"thk":118.0},{"name":"AH 24138","id":180.0,"od":200.0,"thk":146.0},{"name":"AH 3040","id":190.0,"od":215.0,"thk":102.0},{"name":"AH 2240","id":190.0,"od":220.0,"thk":118.0},{"name":"AH 3140","id":190.0,"od":220.0,"thk":134.0},{"name":"AH 3240","id":190.0,"od":220.0,"thk":153.0},{"name":"AH 2340","id":190.0,"od":220.0,"thk":170.0},{"name":"AH 24040","id":190.0,"od":210.0,"thk":127.0},{"name":"AH 24140","id":190.0,"od":210.0,"thk":158.0},{"name":"AOH 3044","id":200.0,"od":235.0,"thk":111.0},{"name":"AOH 3144","id":200.0,"od":240.0,"thk":145.0},{"name":"AOH 2344","id":200.0,"od":240.0,"thk":181.0},{"name":"AOH 24044","id":200.0,"od":230.0,"thk":138.0},{"name":"AOH 24144","id":200.0,"od":230.0,"thk":170.0},{"name":"AOH 3048","id":220.0,"od":260.0,"thk":116.0},{"name":"AOH 3148","id":220.0,"od":260.0,"thk":154.0},{"name":"AOH 2348","id":220.0,"od":260.0,"thk":189.0},{"name":"AOH 24048","id":220.0,"od":250.0,"thk":138.0},{"name":"AOH 24148","id":220.0,"od":260.0,"thk":180.0},{"name":"AOH 3052","id":240.0,"od":280.0,"thk":128.0},{"name":"AOH 2252","id":240.0,"od":290.0,"thk":155.0},{"name":"AOH 3152","id":240.0,"od":290.0,"thk":172.0},{"name":"AOH 2352","id":240.0,"od":290.0,"thk":205.0},{"name":"AOH 24052","id":240.0,"od":270.0,"thk":162.0},{"name":"AOH 24152","id":240.0,"od":280.0,"thk":202.0},{"name":"AOH 3056","id":260.0,"od":300.0,"thk":131.0},{"name":"AOH 3156","id":260.0,"od":310.0,"thk":175.0},{"name":"AOH 2356","id":260.0,"od":310.0,"thk":212.0},{"name":"AOH 24056","id":260.0,"od":290.0,"thk":162.0},{"name":"AOH 24156","id":260.0,"od":300.0,"thk":202.0},{"name":"AOH 3060","id":280.0,"od":320.0,"thk":145.0},{"name":"AOH 3160","id":280.0,"od":330.0,"thk":192.0},{"name":"AOH 3260","id":280.0,"od":330.0,"thk":228.0},{"name":"AOH 24060","id":280.0,"od":310.0,"thk":184.0},{"name":"AOH 24160","id":280.0,"od":320.0,"thk":224.0},{"name":"AOH 3064","id":300.0,"od":345.0,"thk":149.0},{"name":"AOH 3164","id":300.0,"od":350.0,"thk":209.0},{"name":"AOH 3264","id":300.0,"od":330.75,"thk":171.0},{"name":"AOH 24064","id":300.0,"od":330.0,"thk":184.0},{"name":"AOH 24164","id":300.0,"od":340.0,"thk":242.0},{"name":"AOH 3068","id":320.0,"od":365.0,"thk":162.0},{"name":"AOH 3168","id":320.0,"od":370.0,"thk":225.0},{"name":"AOH 3268","id":320.0,"od":370.0,"thk":264.0},{"name":"AOH 24068","id":320.0,"od":360.0,"thk":206.0},{"name":"AOH 24168","id":320.0,"od":360.0,"thk":269.0},{"name":"AOH 3072","id":340.0,"od":385.0,"thk":167.0},{"name":"AOH 3172","id":340.0,"od":400.0,"thk":229.0},{"name":"AOH 3272","id":340.0,"od":400.0,"thk":274.0},{"name":"AOH 24072","id":340.0,"od":380.0,"thk":206.0},{"name":"AOH 24172","id":340.0,"od":380.0,"thk":269.0},{"name":"AOH 3076","id":360.0,"od":410.0,"thk":170.0},{"name":"AOH 3176","id":360.0,"od":420.0,"thk":232.0},{"name":"AOH 3276","id":360.0,"od":420.0,"thk":284.0},{"name":"AOH 24076","id":360.0,"od":400.0,"thk":208.0},{"name":"AOH 24176","id":360.0,"od":400.0,"thk":271.0},{"name":"AOH 3080","id":380.0,"od":430.0,"thk":183.0},{"name":"AOH 3180","id":380.0,"od":440.0,"thk":240.0},{"name":"AOH 3280","id":380.0,"od":440.0,"thk":302.0},{"name":"AOH 24080","id":380.0,"od":420.0,"thk":228.0},{"name":"AOH 24180","id":380.0,"od":420.0,"thk":278.0},{"name":"AOH 3084","id":400.0,"od":450.0,"thk":186.0},{"name":"AOH 3184","id":400.0,"od":460.0,"thk":266.0},{"name":"AOH 24084","id":400.0,"od":440.0,"thk":230.0},{"name":"AOH 24184","id":400.0,"od":440.0,"thk":310.0},{"name":"AOH 24088","id":420.0,"od":460.0,"thk":242.0},{"name":"AOH 24188","id":420.0,"od":460.0,"thk":310.0},{"name":"AOH 24192","id":440.0,"od":480.0,"thk":332.0},{"name":"AOH 24196","id":460.0,"od":500.0,"thk":340.0},{"name":"AOH 241/500","id":480.0,"od":530.0,"thk":360.0},{"name":"AOH 241/530","id":500.0,"od":550.0,"thk":370.0},{"name":"AOH 241/560","id":530.0,"od":580.0,"thk":393.0},{"name":"AOH 241/600","id":560.0,"od":360.0,"thk":413.0},{"name":"AOH 241/630","id":600.0,"od":650.0,"thk":440.0}];
+</script>
+<script>
+// Ceil all finish dimensions to the nearest integer (applied once at load)
+PIPE_DATABASE.forEach(p => { p.id = Math.ceil(p.id); p.od = Math.ceil(p.od); p.thk = Math.ceil(p.thk); });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════
+let orderItems = JSON.parse(localStorage.getItem('pipeOrder') || '[]');
+let stockRules = JSON.parse(localStorage.getItem('stockRules') || '[]');
+let defaults   = JSON.parse(localStorage.getItem('pipeDefaults') || 'null') || { id: -5, od: 5, thk: 7 };
+
+let selectedPipe  = null;  // currently highlighted in autocomplete
+let acItems       = [];    // current autocomplete list
+let acIndex       = -1;
+let dragSrcIdx    = null;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ALLOWANCE LOGIC
+// ═══════════════════════════════════════════════════════════════════════════
+function getPipeSeries(name) {
+  if (!name) return '';
+  return name.split(' ')[0];
+}
+
+function getAllowance(pipe) {
+  if (!pipe) return { id: defaults.id, od: defaults.od, thk: defaults.thk, matched: null };
+  const finishOD = pipe.od;
+  const series = getPipeSeries(pipe.name);
+
+  // Find first matching rule (sorted by priority – order in array)
+  for (const rule of stockRules) {
+    if (rule.type === 'series') {
+      if (series === rule.series) {
+        return { id: parseFloat(rule.id), od: parseFloat(rule.od), thk: parseFloat(rule.thk), matched: rule };
+      }
+    } else {
+      const from = parseFloat(rule.from);
+      const to   = parseFloat(rule.to);
+      if (finishOD >= from && finishOD <= to) {
+        return { id: parseFloat(rule.id), od: parseFloat(rule.od), thk: parseFloat(rule.thk), matched: rule };
+      }
+    }
+  }
+  return { id: defaults.id, od: defaults.od, thk: defaults.thk, matched: null };
+}
+
+function calcRaw(pipe) {
+  const allow = getAllowance(pipe);
+  const rawID  = pipe.id  + allow.id;
+  const rawOD  = pipe.od  + allow.od;
+  const rawTHK = pipe.thk + allow.thk;
+  return { rawID, rawOD, rawTHK, allow };
+}
+
+function calcWeight(item) {
+  // From example: K=rawOD−rawID, L=K/2, M=rawOD−L, N=M×L, O=N×0.00756, P=O×3.281, Q=P×qtyMtr
+  const { rawID, rawOD, rawTHK } = calcRaw(item.pipe);
+  const length  = item.length || rawTHK;
+  const qtyMM   = length * item.qty;
+  const qtyMtr  = qtyMM / 1000;
+  const K = rawOD - rawID;
+  const L = K / 2;
+  const M = rawOD - L;
+  const N = M * L;
+  const O = N * 0.00756;
+  const P = O * 3.281;
+  const weight = P * qtyMtr;
+  return { qtyMM, qtyMtr, weight, rawID, rawOD, rawTHK, length };
+}
+
+function fmt(n, dp = 3) {
+  if (n === undefined || n === null || isNaN(n)) return '—';
+  return parseFloat(n.toFixed(dp)).toString();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════════════════════════════════════════════
+function saveState() {
+  localStorage.setItem('pipeOrder',    JSON.stringify(orderItems));
+  localStorage.setItem('stockRules',   JSON.stringify(stockRules));
+  localStorage.setItem('pipeDefaults', JSON.stringify(defaults));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'database') renderDB();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTOCOMPLETE
+// ═══════════════════════════════════════════════════════════════════════════
+const inputProduct   = document.getElementById('input-product');
+const autocompleteEl = document.getElementById('autocomplete-list');
+const selectedInfo   = document.getElementById('selected-pipe-info');
+
+function renderAutoComplete(list) {
+  autocompleteEl.innerHTML = '';
+  if (!list.length) { autocompleteEl.classList.remove('open'); return; }
+  list.forEach((pipe, i) => {
+    const div = document.createElement('div');
+    div.className = 'autocomplete-item';
+    div.innerHTML = `<span class="item-name">${pipe.name}</span><span class="item-dims">ID ${pipe.id} × OD ${fmt(pipe.od,4)} × THK ${pipe.thk}</span>`;
+    div.addEventListener('mousedown', (e) => { e.preventDefault(); selectPipe(pipe); });
+    autocompleteEl.appendChild(div);
+  });
+  acItems = list;
+  acIndex = -1;
+  autocompleteEl.classList.add('open');
+}
+
+function selectPipe(pipe) {
+  selectedPipe = pipe;
+  inputProduct.value = pipe.name;
+  autocompleteEl.classList.remove('open');
+  showPipeInfo(pipe);
+}
+
+function showPipeInfo(pipe) {
+  const { rawID, rawOD, rawTHK, allow } = calcRaw(pipe);
+  const ruleLabel = allow.matched ? (allow.matched.type === 'series' ? `Rule: Series ${allow.matched.series}` : `Rule: OD ${allow.matched.from}–${allow.matched.to}`) : 'Default';
+  selectedInfo.innerHTML = `
+    <span class="chip">Finish: ID ${pipe.id} / OD ${fmt(pipe.od,4)} / THK ${pipe.thk}</span>
+    <span class="chip">→ Raw: ID ${fmt(rawID,3)} / OD ${fmt(rawOD,3)} / THK ${fmt(rawTHK,3)}</span>
+    <span class="chip active-rule">Allowance: ${ruleLabel}</span>
+  `;
+}
+
+inputProduct.addEventListener('input', () => {
+  selectedPipe = null;
+  selectedInfo.innerHTML = '';
+  const q = inputProduct.value.trim().toLowerCase();
+  if (!q) { autocompleteEl.classList.remove('open'); return; }
+  const matches = PIPE_DATABASE.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    String(p.od).includes(q) ||
+    String(p.id).includes(q)
+  ).slice(0, 40);
+  renderAutoComplete(matches);
+});
+
+inputProduct.addEventListener('keydown', (e) => {
+  const items = autocompleteEl.querySelectorAll('.autocomplete-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    acIndex = Math.min(acIndex + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('selected', i === acIndex));
+    if (items[acIndex]) items[acIndex].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    acIndex = Math.max(acIndex - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('selected', i === acIndex));
+    if (items[acIndex]) items[acIndex].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') {
+    if (acIndex >= 0 && acItems[acIndex]) selectPipe(acItems[acIndex]);
+    else if (acItems.length === 1) selectPipe(acItems[0]);
+  } else if (e.key === 'Escape') {
+    autocompleteEl.classList.remove('open');
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.autocomplete-wrap')) autocompleteEl.classList.remove('open');
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADD ITEM
+// ═══════════════════════════════════════════════════════════════════════════
+document.getElementById('btn-add-item').addEventListener('click', addItem);
+document.getElementById('input-qty').addEventListener('keydown', (e) => { if (e.key === 'Enter') addItem(); });
+document.getElementById('input-length').addEventListener('keydown', (e) => { if (e.key === 'Enter') addItem(); });
+
+function addItem() {
+  if (!selectedPipe) {
+    // Try exact match
+    const q = inputProduct.value.trim().toLowerCase();
+    const match = PIPE_DATABASE.find(p => p.name.toLowerCase() === q);
+    if (match) { selectPipe(match); return; }
+    toast('Select a product from the list first.', 'error');
+    inputProduct.focus();
+    return;
+  }
+  const qty = parseInt(document.getElementById('input-qty').value) || 1;
+  const lengthVal = document.getElementById('input-length').value.trim();
+  const length = lengthVal ? parseFloat(lengthVal) : null;
+
+  orderItems.push({ pipe: selectedPipe, qty, length });
+  saveState();
+  renderOrderTable();
+
+  // Reset
+  selectedPipe = null;
+  inputProduct.value = '';
+  document.getElementById('input-qty').value = '';
+  document.getElementById('input-length').value = '';
+  selectedInfo.innerHTML = '';
+  inputProduct.focus();
+  toast(`Added: ${orderItems[orderItems.length-1].pipe.name}`, 'success');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ORDER TABLE
+// ═══════════════════════════════════════════════════════════════════════════
+function renderOrderTable() {
+  const tbody  = document.getElementById('order-tbody');
+  const sumBar = document.getElementById('summary-bar');
+
+  tbody.innerHTML = '';
+
+  if (!orderItems.length) {
+    tbody.innerHTML = `<tr id="no-items-row"><td colspan="13" class="no-items">
+      <div class="no-items-icon">📭</div>
+      <div>No items yet. Search and add a product above.</div>
+    </td></tr>`;
+    sumBar.style.display = 'none';
+    return;
+  }
+
+  sumBar.style.display = 'flex';
+  let totalQty = 0, totalMtr = 0, totalWeight = 0;
+
+  orderItems.forEach((item, idx) => {
+    const { qtyMM, qtyMtr, weight, rawID, rawOD, rawTHK, length } = calcWeight(item);
+    const { allow } = calcRaw(item.pipe);
+    totalQty    += item.qty;
+    totalMtr    += qtyMtr;
+    totalWeight += weight;
+
+    const tr = document.createElement('tr');
+    tr.draggable = true;
+    tr.dataset.idx = idx;
+    tr.innerHTML = `
+      <td><span class="drag-handle" title="Drag to reorder">⠿</span></td>
+      <td class="td-name">${item.pipe.name}</td>
+      <td class="center">
+        <input type="number" class="qty-input" value="${item.qty}" min="1" style="width:70px;text-align:center"
+          onchange="updateQty(${idx}, this.value)" />
+      </td>
+      <td class="center td-finish">${fmt(item.pipe.id,2)}</td>
+      <td class="center td-finish">${fmt(item.pipe.od,4)}</td>
+      <td class="center td-finish">${item.pipe.thk}</td>
+      <td class="center td-raw">${fmt(rawID,2)}</td>
+      <td class="center td-raw">${fmt(rawOD,4)}</td>
+      <td class="center td-raw">${fmt(rawTHK,2)}</td>
+      <td class="center">
+        <input type="number" class="qty-input" value="${item.length || ''}"
+          placeholder="${fmt(rawTHK,2)}" min="1"
+          title="Length in mm (blank = Raw THK)"
+          style="width:90px;text-align:center"
+          onchange="updateLength(${idx}, this.value)" />
+      </td>
+      <td class="center">${fmt(qtyMtr,3)}</td>
+      <td class="center"><span class="weight-badge">${fmt(weight,2)} kg</span></td>
+      <td><button class="del-btn" onclick="deleteItem(${idx})" title="Remove">✕</button></td>
+    `;
+
+    // Drag events
+    tr.addEventListener('dragstart', (e) => { dragSrcIdx = idx; tr.style.opacity = '0.5'; });
+    tr.addEventListener('dragend',   (e) => { tr.style.opacity = '1'; });
+    tr.addEventListener('dragover',  (e) => { e.preventDefault(); tr.classList.add('drag-over'); });
+    tr.addEventListener('dragleave', () => tr.classList.remove('drag-over'));
+    tr.addEventListener('drop', (e) => {
+      e.preventDefault();
+      tr.classList.remove('drag-over');
+      if (dragSrcIdx !== null && dragSrcIdx !== idx) {
+        const moved = orderItems.splice(dragSrcIdx, 1)[0];
+        orderItems.splice(idx, 0, moved);
+        saveState();
+        renderOrderTable();
+      }
+      dragSrcIdx = null;
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('sum-items').textContent  = orderItems.length;
+  document.getElementById('sum-qty').textContent    = totalQty;
+  document.getElementById('sum-mtr').textContent    = fmt(totalMtr, 2);
+  document.getElementById('sum-weight').textContent = fmt(totalWeight, 2) + ' kg';
+}
+
+function updateQty(idx, val) {
+  orderItems[idx].qty = Math.max(1, parseInt(val) || 1);
+  saveState();
+  renderOrderTable();
+}
+
+function updateLength(idx, val) {
+  orderItems[idx].length = val ? parseFloat(val) : null;
+  saveState();
+  renderOrderTable();
+}
+
+function deleteItem(idx) {
+  orderItems.splice(idx, 1);
+  saveState();
+  renderOrderTable();
+  toast('Item removed.', 'success');
+}
+
+document.getElementById('btn-clear-all').addEventListener('click', () => {
+  if (!orderItems.length) return;
+  if (confirm('Clear all items from the order?')) {
+    orderItems = [];
+    saveState();
+    renderOrderTable();
+    toast('Order cleared.', 'success');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STOCK SETTINGS
+// ═══════════════════════════════════════════════════════════════════════════
+// Validates all rules and returns diagnostics for each rule.
+// Diagnostics include flags: overlap, rangeError, allowError, errorMsg
+function validateRules() {
+  const diagnostics = [];
+  const overlapping = new Set();
+
+  for (let a = 0; a < stockRules.length; a++) {
+    const ra = stockRules[a];
+    const typeA = ra.type || 'range';
+    for (let b = a + 1; b < stockRules.length; b++) {
+      const rb = stockRules[b];
+      const typeB = rb.type || 'range';
+      if (typeA === typeB) {
+        if (typeA === 'series') {
+          if (ra.series && rb.series && ra.series === rb.series) {
+            overlapping.add(a);
+            overlapping.add(b);
+          }
+        } else {
+          // range
+          const fromA = parseFloat(ra.from) || 0;
+          const toA = parseFloat(ra.to) || 0;
+          const fromB = parseFloat(rb.from) || 0;
+          const toB = parseFloat(rb.to) || 0;
+          if (fromA <= toB && fromB <= toA) {
+            overlapping.add(a);
+            overlapping.add(b);
+          }
+        }
+      }
+    }
+  }
+
+  let hasErrors = false;
+  for (let i = 0; i < stockRules.length; i++) {
+    const rule = stockRules[i];
+    const isSeries = rule.type === 'series';
+    const from = parseFloat(rule.from) || 0;
+    const to = parseFloat(rule.to) || 0;
+    const idAllow = parseFloat(rule.id) || 0;
+    const odAllow = parseFloat(rule.od) || 0;
+
+    let rangeError = false;
+    let allowError = false;
+    const errors = [];
+
+    if (!isSeries && to < from) {
+      rangeError = true;
+      errors.push('To OD less than From OD');
+      hasErrors = true;
+    }
+    if (odAllow < idAllow) {
+      allowError = true;
+      errors.push('OD allow less than ID allow');
+      hasErrors = true;
+    }
+    if (overlapping.has(i)) {
+      if (isSeries) {
+        errors.push('Duplicate series rule');
+      } else {
+        errors.push('Overlaps another rule');
+      }
+    }
+
+    diagnostics.push({
+      overlap: overlapping.has(i),
+      rangeError,
+      allowError,
+      errorMsg: errors.join(', ')
+    });
+  }
+
+  return { diagnostics, hasErrors: hasErrors || overlapping.size > 0, overlappingCount: overlapping.size };
+}
+
+function renderRules() {
+  const container = document.getElementById('rules-container');
+  container.innerHTML = '';
+
+  if (!stockRules.length) {
+    container.innerHTML = `<div class="card card-compact" style="color:var(--text-muted);font-size:13px">
+      No custom rules. Default allowances apply to all pipe sizes.</div>`;
+    return;
+  }
+
+  const { diagnostics, hasErrors } = validateRules();
+  const uniqueSeries = [...new Set(PIPE_DATABASE.map(p => p.name.split(' ')[0]))].sort();
+
+  stockRules.forEach((rule, i) => {
+    const diag = diagnostics[i];
+    const hasRuleError = diag.rangeError || diag.allowError || diag.overlap;
+    const div = document.createElement('div');
+    div.className = 'stock-rule';
+    if (hasRuleError) {
+      div.style.borderColor = 'var(--red)';
+      div.style.background = 'rgba(248,81,73,0.06)';
+    }
+
+    const isSeries = rule.type === 'series';
+
+    // Generate series select options
+    const seriesOptions = uniqueSeries.map(s => `
+      <option value="${s}" ${rule.series === s ? 'selected' : ''}>${s}</option>
+    `).join('');
+
+    div.innerHTML = `
+      <div>
+        <div class="rule-label">Rule ${i+1}</div>
+        <select onchange="updateRuleType(${i}, this.value)" style="margin-top: 4px; font-size: 11px; padding: 4px; width: 100%; border-radius: 4px; background: var(--surface); color: var(--text); border: 1px solid var(--border);">
+          <option value="range" ${!isSeries ? 'selected' : ''}>OD Range</option>
+          <option value="series" ${isSeries ? 'selected' : ''}>Series</option>
+        </select>
+        ${diag.errorMsg ? `<div style="font-size:10px;color:var(--red);margin-top:4px;font-weight:600;line-height:1.2">⚠ ${diag.errorMsg}</div>` : ''}
+      </div>
+      <div style="grid-column: span 2; display: flex; gap: 8px; width: 100%;">
+        ${isSeries ? `
+          <div style="display: flex; flex-direction: column; width: 100%;">
+            <label>Pipe Series</label>
+            <select onchange="updateRule(${i}, 'series', this.value)" style="width: 100%; border-radius: 4px; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 4px; margin-top: 4px;">
+              ${seriesOptions}
+            </select>
+          </div>
+        ` : `
+          <div style="flex: 1;">
+            <label>From OD (mm)</label>
+            <input type="number" value="${rule.from || 0}" min="0"
+              style="${diag.rangeError || diag.overlap ? 'border-color:var(--red)' : ''}"
+              onchange="updateRule(${i},'from',this.value)" />
+          </div>
+          <div style="flex: 1;">
+            <label>To OD (mm)</label>
+            <input type="number" value="${rule.to || 0}" min="0"
+              style="${diag.rangeError || diag.overlap ? 'border-color:var(--red)' : ''}"
+              onchange="updateRule(${i},'to',this.value)" />
+          </div>
+        `}
+      </div>
+      <div>
+        <label>ID allow</label>
+        <input type="number" value="${rule.id}" step="1"
+          style="${diag.allowError ? 'border-color:var(--red)' : ''}"
+          onchange="updateRule(${i},'id',this.value)" />
+      </div>
+      <div>
+        <label>OD allow</label>
+        <input type="number" value="${rule.od}" step="1"
+          style="${diag.allowError ? 'border-color:var(--red)' : ''}"
+          onchange="updateRule(${i},'od',this.value)" />
+      </div>
+      <div>
+        <label>THK allow</label>
+        <input type="number" value="${rule.thk}" step="1" onchange="updateRule(${i},'thk',this.value)" />
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;padding-top:16px">
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRule(${i})" title="Delete rule">✕</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+
+  // Show global conflict banner if any
+  const banner = document.getElementById('overlap-banner');
+  if (banner) banner.remove();
+
+  const errorsList = [];
+  let overlapCount = 0;
+  let rangeErrCount = 0;
+  let allowErrCount = 0;
+
+  diagnostics.forEach(d => {
+    if (d.overlap) overlapCount++;
+    if (d.rangeError) rangeErrCount++;
+    if (d.allowError) allowErrCount++;
+  });
+
+  if (overlapCount > 0) errorsList.push(`${overlapCount} overlapping/duplicate rules`);
+  if (rangeErrCount > 0) errorsList.push(`${rangeErrCount} range errors (To OD less than From OD)`);
+  if (allowErrCount > 0) errorsList.push(`${allowErrCount} allowance errors (OD allowance less than ID allowance)`);
+
+  if (errorsList.length > 0) {
+    const b = document.createElement('div');
+    b.id = 'overlap-banner';
+    b.style.cssText = 'margin-top:12px;padding:10px 14px;background:var(--red-dim);border:1px solid var(--red);border-radius:6px;color:var(--red);font-size:13px;font-weight:500';
+    b.textContent = '⚠  Validation issues detected: ' + errorsList.join(', ') + '. Fix them — only the first matching rule applies, and invalid rules will result in unexpected raw dimension calculations.';
+    container.appendChild(b);
+  }
+}
+
+function updateRule(i, key, val) {
+  if (key === 'series' || key === 'type') {
+    stockRules[i][key] = val;
+  } else {
+    stockRules[i][key] = parseFloat(val);
+  }
+  saveState();
+  renderRules();        // re-render to show/clear overlap warnings live
+  renderOrderTable();
+}
+
+function updateRuleType(i, type) {
+  stockRules[i].type = type;
+  if (type === 'series') {
+    if (!stockRules[i].series) {
+      const uniqueSeries = [...new Set(PIPE_DATABASE.map(p => p.name.split(' ')[0]))].sort();
+      stockRules[i].series = uniqueSeries[0] || 'H';
+    }
+  } else {
+    if (stockRules[i].from === undefined) stockRules[i].from = 0;
+    if (stockRules[i].to === undefined) stockRules[i].to = 100;
+  }
+  saveState();
+  renderRules();
+  renderOrderTable();
+}
+
+function deleteRule(i) {
+  stockRules.splice(i, 1);
+  saveState();
+  renderRules();
+  renderOrderTable();
+  toast('Rule deleted.', 'success');
+}
+
+document.getElementById('btn-add-rule').addEventListener('click', () => {
+  // Block adding if existing rules already have unresolved validation errors
+  if (validateRules().hasErrors) {
+    toast('Fix validation errors or overlapping rules before adding a new one.', 'error');
+    return;
+  }
+  stockRules.push({ type: 'range', from: 0, to: 100, id: -5, od: 5, thk: 7 });
+  saveState();
+  renderRules();
+});
+
+document.getElementById('btn-save-defaults').addEventListener('click', () => {
+  defaults.id  = parseFloat(document.getElementById('default-id-allow').value) || -5;
+  defaults.od  = parseFloat(document.getElementById('default-od-allow').value) ||  5;
+  defaults.thk = parseFloat(document.getElementById('default-thk-allow').value)||  7;
+  saveState();
+  renderOrderTable();
+  toast('Default allowances saved.', 'success');
+});
+
+// Load defaults into inputs
+document.getElementById('default-id-allow').value  = defaults.id;
+document.getElementById('default-od-allow').value  = defaults.od;
+document.getElementById('default-thk-allow').value = defaults.thk;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DATABASE BROWSER
+// ═══════════════════════════════════════════════════════════════════════════
+function renderDB() {
+  const q       = document.getElementById('db-search').value.toLowerCase();
+  const series  = document.getElementById('db-filter-series').value;
+  const tbody   = document.getElementById('db-tbody');
+  const count   = document.getElementById('db-count');
+
+  let filtered = PIPE_DATABASE;
+  if (series) filtered = filtered.filter(p => p.name.startsWith(series));
+  if (q)      filtered = filtered.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    String(p.od).includes(q) ||
+    String(p.id).includes(q) ||
+    String(p.thk).includes(q)
+  );
+
+  count.textContent = `Showing ${filtered.length} of ${PIPE_DATABASE.length}`;
+  tbody.innerHTML = filtered.map(p => {
+    const allow  = getAllowance(p);
+    const rawID  = fmt(p.id  + allow.id,  2);
+    const rawOD  = fmt(p.od  + allow.od,  3);
+    const rawTHK = fmt(p.thk + allow.thk, 2);
+    return `<tr>
+      <td class="td-name">${p.name}</td>
+      <td class="center td-finish">${p.id}</td>
+      <td class="center td-finish">${fmt(p.od,4)}</td>
+      <td class="center td-finish">${p.thk}</td>
+      <td class="center td-raw">${rawID}</td>
+      <td class="center td-raw">${rawOD}</td>
+      <td class="center td-raw">${rawTHK}</td>
+      <td><button class="btn btn-secondary btn-sm" onclick="addFromDB(${JSON.stringify(p).replace(/"/g,'&quot;')})">+ Add</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function addFromDB(pipe) {
+  selectPipe(pipe);
+  // Switch to calculator tab
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="calculator"]').classList.add('active');
+  document.getElementById('tab-calculator').classList.add('active');
+  document.getElementById('input-qty').focus();
+}
+
+// Populate series filter
+const series = [...new Set(PIPE_DATABASE.map(p => p.name.split(' ')[0]))].sort();
+const sel = document.getElementById('db-filter-series');
+series.forEach(s => {
+  const opt = document.createElement('option');
+  opt.value = s; opt.textContent = s;
+  sel.appendChild(opt);
+});
+
+document.getElementById('db-search').addEventListener('input', renderDB);
+document.getElementById('db-filter-series').addEventListener('change', renderDB);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EXPORT EXCEL
+// ═══════════════════════════════════════════════════════════════════════════
+document.getElementById('btn-export').addEventListener('click', exportExcel);
+
+async function exportExcel() {
+  if (!orderItems.length) { toast('Add items to export.', 'error'); return; }
+
+  document.getElementById('spinner').classList.add('active');
+
+  // Use SheetJS (load from CDN if not present)
+  if (typeof XLSX === 'undefined') {
+    await loadScript('https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js');
+  }
+
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+
+  // Row 1: merged header
+  rows.push(['', '', 'FINISH SIZE', '', '', 'RAW SIZE', '', '', '', '', 'WEIGHT']);
+  // Row 2: col headers
+  rows.push(['MATERIAL DESC', 'QTY', 'ID', 'OD', 'THK', 'ID', 'OD', 'THK', 'QTY IN MM', 'QTY IN MTR', 'WEIGHT']);
+
+  orderItems.forEach((item, i) => {
+    const { qtyMM, qtyMtr, weight, rawID, rawOD, rawTHK, length } = calcWeight(item);
+    rows.push([
+      item.pipe.name,
+      item.qty,
+      item.pipe.id,
+      parseFloat(fmt(item.pipe.od,4)),
+      item.pipe.thk,
+      parseFloat(fmt(rawID,4)),
+      parseFloat(fmt(rawOD,4)),
+      parseFloat(fmt(rawTHK,4)),
+      parseFloat(fmt(qtyMM,4)),
+      parseFloat(fmt(qtyMtr,4)),
+      parseFloat(fmt(weight,4))  // K – Weight
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+  // Style column widths
+  ws['!cols'] = [
+    {wch:18},{wch:8},{wch:8},{wch:10},{wch:8},
+    {wch:8},{wch:10},{wch:8},{wch:12},{wch:12},
+    {wch:12}
+  ];
+
+  // Merge header cells
+  ws['!merges'] = [
+    { s:{r:0,c:2}, e:{r:0,c:4} },  // FINISH SIZE
+    { s:{r:0,c:5}, e:{r:0,c:7} },  // RAW SIZE
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Pipe RM Order');
+  const date = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `Pipe_RM_Order_${date}.xlsx`);
+
+  document.getElementById('spinner').classList.remove('active');
+  toast('Excel exported successfully!', 'success');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// IMPORT EXCEL
+// ═══════════════════════════════════════════════════════════════════════════
+document.getElementById('btn-import-trigger').addEventListener('click', () => {
+  document.getElementById('input-import-excel').click();
+});
+
+document.getElementById('input-import-excel').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) importExcel(file);
+});
+
+async function importExcel(file) {
+  document.getElementById('spinner').classList.add('active');
+  try {
+    if (typeof XLSX === 'undefined') {
+      await loadScript('https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js');
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        if (jsonData.length < 2) {
+          toast('Invalid sheet format. Too few rows.', 'error');
+          return;
+        }
+
+        let headerRowIdx = -1;
+        for (let i = 0; i < Math.min(jsonData.length, 5); i++) {
+          const row = jsonData[i];
+          if (row && row.includes('MATERIAL DESC') && row.includes('QTY')) {
+            headerRowIdx = i;
+            break;
+          }
+        }
+
+        if (headerRowIdx === -1) {
+          toast('Could not find header row. Make sure column "MATERIAL DESC" and "QTY" exist.', 'error');
+          return;
+        }
+
+        const itemsImported = [];
+
+        for (let i = headerRowIdx + 1; i < jsonData.length; i++) {
+          const row = jsonData[i];
+          if (!row || row.length === 0) continue;
+
+          const nameVal = row[0];
+          if (!nameVal || String(nameVal).trim() === '') continue;
+
+          const qtyVal = parseInt(row[1]);
+          if (isNaN(qtyVal) || qtyVal <= 0) continue;
+
+          // Try to match in PIPE_DATABASE
+          let pipe = PIPE_DATABASE.find(p => p.name.toLowerCase() === String(nameVal).trim().toLowerCase());
+          if (!pipe) {
+            // Reconstruct pipe from finish dimensions in cols 2, 3, 4 (0-indexed: ID is col 2, OD is col 3, THK is col 4)
+            const idVal = Math.ceil(parseFloat(row[2]) || 0);
+            const odVal = Math.ceil(parseFloat(row[3]) || 0);
+            const thkVal = Math.ceil(parseFloat(row[4]) || 0);
+            pipe = {
+              name: String(nameVal).trim(),
+              id: idVal,
+              od: odVal,
+              thk: thkVal
+            };
+          }
+
+          // Calculate custom length if any
+          const qtyMMVal = parseFloat(row[8]);
+          let length = null;
+          if (!isNaN(qtyMMVal)) {
+            const calculatedLength = qtyMMVal / qtyVal;
+            const { rawTHK } = calcRaw(pipe);
+            if (Math.abs(calculatedLength - rawTHK) > 0.05) {
+              length = Math.round(calculatedLength); // Round to closest integer
+            }
+          }
+
+          itemsImported.push({ pipe, qty: qtyVal, length });
+        }
+
+        if (itemsImported.length === 0) {
+          toast('No valid items found to import.', 'error');
+          return;
+        }
+
+        if (orderItems.length > 0) {
+          if (confirm(`Imported ${itemsImported.length} items. Do you want to APPEND them to the current order? (Click Cancel to REPLACE the current order)`)) {
+            orderItems = orderItems.concat(itemsImported);
+          } else {
+            orderItems = itemsImported;
+          }
+        } else {
+          orderItems = itemsImported;
+        }
+
+        saveState();
+        renderOrderTable();
+        toast(`Successfully imported ${itemsImported.length} items!`, 'success');
+      } catch (err) {
+        console.error(err);
+        toast('Failed to parse Excel file.', 'error');
+      } finally {
+        document.getElementById('spinner').classList.remove('active');
+        document.getElementById('input-import-excel').value = '';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('spinner').classList.remove('active');
+    toast('Error loading SheetJS library.', 'error');
+  }
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════════════
+function toast(msg, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type === 'success' ? '✓' : '⚠'}</span> ${msg}`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'slideOut 0.25s ease forwards';
+    setTimeout(() => el.remove(), 250);
+  }, 2800);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+renderOrderTable();
+renderRules();
+renderDB();
+</script>
+</body>
+</html>
