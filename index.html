@@ -1355,8 +1355,8 @@ async function exportExcel() {
     const odSign = allow.od >= 0 ? '+' : '';
     const thkSign = allow.thk >= 0 ? '+' : '';
 
-    const lengthFormula = length !== null 
-      ? `${length}*B${rowIdx}` 
+    const lengthFormula = (item.length !== undefined && item.length !== null)
+      ? `${item.length}*B${rowIdx}` 
       : `H${rowIdx}*B${rowIdx}`;
 
     rows.push([
