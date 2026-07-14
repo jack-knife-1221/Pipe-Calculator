@@ -1348,18 +1348,29 @@ async function exportExcel() {
 
   orderItems.forEach((item, i) => {
     const { qtyMM, qtyMtr, weight, rawID, rawOD, rawTHK, length } = calcWeight(item);
+    const { allow } = calcRaw(item.pipe);
+    const rowIdx = i + 3; // Excel rows are 1-based, first data item is row 3
+
+    const idSign = allow.id >= 0 ? '+' : '';
+    const odSign = allow.od >= 0 ? '+' : '';
+    const thkSign = allow.thk >= 0 ? '+' : '';
+
+    const lengthFormula = length !== null 
+      ? `${length}*B${rowIdx}` 
+      : `H${rowIdx}*B${rowIdx}`;
+
     rows.push([
       item.pipe.name,
       item.qty,
       item.pipe.id,
       parseFloat(fmt(item.pipe.od,4)),
       item.pipe.thk,
-      parseFloat(fmt(rawID,4)),
-      parseFloat(fmt(rawOD,4)),
-      parseFloat(fmt(rawTHK,4)),
-      parseFloat(fmt(qtyMM,4)),
-      parseFloat(fmt(qtyMtr,4)),
-      parseFloat(fmt(weight,4))  // K – Weight
+      { t: 'n', f: `C${rowIdx}${idSign}${allow.id}`, v: parseFloat(fmt(rawID,4)) },
+      { t: 'n', f: `D${rowIdx}${odSign}${allow.od}`, v: parseFloat(fmt(rawOD,4)) },
+      { t: 'n', f: `E${rowIdx}${thkSign}${allow.thk}`, v: parseFloat(fmt(rawTHK,4)) },
+      { t: 'n', f: lengthFormula, v: parseFloat(fmt(qtyMM,4)) },
+      { t: 'n', f: `I${rowIdx}/1000`, v: parseFloat(fmt(qtyMtr,4)) },
+      { t: 'n', f: `((G${rowIdx}-F${rowIdx})/2)*(G${rowIdx}-((G${rowIdx}-F${rowIdx})/2))*0.00756*3.281*J${rowIdx}`, v: parseFloat(fmt(weight,4)) }
     ]);
   });
 
