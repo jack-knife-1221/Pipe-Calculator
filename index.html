@@ -32,6 +32,27 @@
       --shadow: 0 8px 32px rgba(0,0,0,0.4);
       --transition: 0.2s ease;
     }
+    :root[data-theme="light"] {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --surface2: #f0f3f6;
+      --surface3: #e1e4e8;
+      --border: #d0d7de;
+      --border-light: #d8dee4;
+      --accent: #0969da;
+      --accent2: #0969da;
+      --accent-glow: rgba(9,105,218,0.15);
+      --green: #1a7f37;
+      --green-dim: rgba(26,127,55,0.15);
+      --orange: #9a6700;
+      --orange-dim: rgba(154,103,0,0.15);
+      --red: #cf222e;
+      --red-dim: rgba(207,34,46,0.15);
+      --text: #24292f;
+      --text-muted: #57606a;
+      --text-dim: #8c959f;
+      --shadow: 0 8px 24px rgba(140,149,159,0.15);
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
@@ -488,6 +509,7 @@
       </div>
     </div>
     <div class="header-actions">
+      <button class="btn btn-secondary btn-icon" id="btn-theme-toggle" title="Toggle Light/Dark Mode" style="font-size: 14px;">🌙</button>
       <button class="btn btn-secondary btn-sm" id="btn-clear-all" title="Clear all items">🗑 Clear All</button>
       <button class="btn btn-green" id="btn-export">⬇ Export Excel</button>
       <button class="btn btn-primary" id="btn-import-trigger">⬆ Import Excel</button>
@@ -1541,6 +1563,32 @@ function toast(msg, type = 'success') {
     setTimeout(() => el.remove(), 250);
   }, 2800);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════════════════════════════════════════
+const themeToggleBtn = document.getElementById('btn-theme-toggle');
+
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    themeToggleBtn.textContent = '🌙';
+    themeToggleBtn.title = 'Toggle Dark Mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeToggleBtn.textContent = '☀️';
+    themeToggleBtn.title = 'Toggle Light Mode';
+  }
+}
+
+let currentTheme = localStorage.getItem('theme') || 'dark';
+applyTheme(currentTheme);
+
+themeToggleBtn.addEventListener('click', () => {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', currentTheme);
+  applyTheme(currentTheme);
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INIT
